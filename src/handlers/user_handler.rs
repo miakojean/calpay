@@ -1,35 +1,47 @@
-use actix_web::{HttpResponse, web};
+use actix_web::{HttpResponse, web, Responder};
 use uuid::Uuid;
 use validator::Validate;
 // Note : j'ai simplifié l'import pour plus de clarté
 use crate::models::api_response::ApiResponse;
-use crate::models::user::{User, CreateUser};
+use crate::models::user::{User, CreateUser, ActiveModel};
 
-pub async fn create_user(user: web::Json<CreateUser>) -> HttpResponse {
-    // 1. Validation (inclut maintenant la longueur du password)
-    if let Err(errors) = user.validate() {
+use sea_orm::{DatabaseConnection};
+use sea_orm::{ActiveModelTrait, Set};
+
+// ... tes autres imports
+
+pub async fn create_user(
+    db: web::Data<DatabaseConnection>, // 1. AJOUT de la connexion ici !
+    user_json: web::Json<CreateUser>   // 2. Renommé pour la clarté
+) -> HttpResponse {
+    
+    // Validation
+    if let Err(errors) = user_json.validate() {
         return HttpResponse::BadRequest().json(
             ApiResponse::<()>::validation_error(errors)
         );
     }
 
-    // 2. Sécurité : Hachage du mot de passe
-    // Dans la vraie vie : let hashed_password = bcrypt::hash(&user.password, 10).unwrap();
-    let hashed_password = format!("sha256_fake_hash_{}", user.password); 
+    // Sécurité (Hachage)
+    let hashed_password = format!("sha256_fake_hash_{}", user_json.password); 
 
-    // 3. Création de l'objet User
-    let new_user = User {
-        id: Uuid::new_v4(),
-        username: user.username.clone(),
-        email: user.email.clone(),
-        firstname: user.firstname.clone(),
-        lastname: user.lastname.clone(),
-        password_hash: hashed_password, // On stocke le hash, pas le mot de passe
+    // 3. Création de l'ActiveModel
+    // On utilise user_json (et non user_data)
+    let new_user = ActiveModel {
+        id: Set(Uuid::new_v4()),
+        username: Set(user_json.username.clone()),
+        email: Set(user_json.email.clone()),
+        firstname: Set(user_json.firstname.clone()),
+        lastname: Set(user_json.lastname.clone()),
+        password_hash: Set(hashed_password),
+        ..Default::default()
     };
 
-    // 4. Réponse
-    // Grâce à #[serde(skip_serializing)], password_hash ne sera pas dans le JSON final
-    HttpResponse::Created().json(ApiResponse::success(new_user))
+    // 4. Insertion réelle en base
+    match new_user.insert(db.get_ref()).await {
+        Ok(user_model) => HttpResponse::Created().json(ApiResponse::success(user_model)),
+        Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
+    }
 }
 
 pub async fn get_user(user_id: web::Path<Uuid>) -> HttpResponse {
@@ -50,4 +62,11 @@ pub async fn get_user(user_id: web::Path<Uuid>) -> HttpResponse {
 
 pub async fn health_check() -> HttpResponse {
     HttpResponse::Ok().json(ApiResponse::success("API is up and running!"))
+}
+
+pub async fn health_db_check(db: web::Data<DatabaseConnection>) -> impl Responder {
+    match db.ping().await {
+        Ok(_)=> HttpResponse::Ok().body("la base de données repond parfaitement !"),
+        Err(e)=> HttpResponse::InternalServerError().body(format!("Erreur BDD:{}", e))
+    }
 }

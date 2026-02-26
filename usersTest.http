@@ -1,0 +1,10 @@
+post http://localhost/api/users
+Content-Type: application/json
+
+{
+    "username": "Johndoe",
+    "email": "jean",
+    "firstname":"John",
+    "lastname": "Doe",
+    "password": "Jeanyves123456@"
+}

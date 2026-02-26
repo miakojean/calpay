@@ -1,3 +1,63 @@
-/target
-*/http
-*http
+# Généré par Cargo
+/target/
+*target
+**/*.rs.bk
+
+# Fichier de verrouillage pour les bibliothèques (ne pas versionner)
+# Pour les binaires, il est recommandé de le conserver, mais on peut l'ignorer si besoin
+Cargo.lock
+
+# Fichiers temporaires
+*~
+\#*\#
+.#*
+
+# Fichiers de l'éditeur
+.vscode/
+.idea/
+*.swp
+*.swo
+*.iml
+*.sublime-*
+
+# Fichiers système (macOS, Windows, Linux)
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Fichiers de logs et traces
+*.log
+*.trace
+*.profraw
+
+# Répertoires de couverture de test
+**/lcov.info
+**/*.gcov
+**/*.gcda
+**/*.gcno
+**/coverage/
+**/target/debug/coverage/
+
+# Répertoires de build manuels
+/build/
+/dist/
+/out/
+
+# Fichiers générés par des outils externes
+**/*.bk
+**/*.bak
+
+# Fichiers spécifiques à SeaORM (si vous générez des entités automatiquement, les ignorer éventuellement)
+# /src/entities/  # Décommentez si vous générez les entités et ne souhaitez pas les versionner
+
+# Fichiers de base de données locaux (si vous utilisez SQLite par exemple)
+*.db
+*.sqlite
+*.sqlite3
+
+# Fichiers de configuration sensibles (à adapter)
+.env
+*.env
+secrets.yaml
