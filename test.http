@@ -1,0 +1,46 @@
+POST http://127.0.0.1:8080/api/users
+Content-Type: application/json
+
+{   
+    "lastname": "Doe",
+    "firstname": "John",
+    "username": "johndoe",
+    "email": "johndoe@gmail.com",
+    "password": "Jeanyves123456@"
+}
+
+###
+POST http://127.0.0.1:8080/api/users
+Content-Type: application/json
+
+{   
+    "lastname": "Doe",
+    "firstname": "John",
+    "username": "johndoe",
+    "email": "johndoe@gmail.com",
+    "password": "Jeanyves123456@"
+}
+
+###
+POST http://127.0.0.1:8080/api/users
+Content-Type: application/json
+
+{   
+    "lastname": "Doe",
+    "firstname": "John",
+    "username": "johndoe",
+    "email": "johndoe@gmail.com",
+    "password": "Jeanyves123456@"
+}
+
+###
+POST http://127.0.0.1:8080/api/users
+Content-Type: application/json
+
+{   
+    "lastname": "MIAKO",
+    "firstname": "Jean Yves Arnold",
+    "username": "johnyves",
+    "email": "miakojeanyves@gmail.com",
+    "password": "Jeanyves123456@"
+}

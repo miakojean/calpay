@@ -8,6 +8,8 @@ use crate::models::user::{User, CreateUser, ActiveModel};
 use sea_orm::{DatabaseConnection};
 use sea_orm::{ActiveModelTrait, Set};
 
+use crate::utils::password::hash_password;
+
 // ... tes autres imports
 
 pub async fn create_user(
@@ -23,7 +25,11 @@ pub async fn create_user(
     }
 
     // Sécurité (Hachage)
-    let hashed_password = format!("sha256_fake_hash_{}", user_json.password); 
+    let hashed_password = match hash_password(&user_json.password) {
+        Ok(hash) => hash,
+        Err(_) => return HttpResponse::InternalServerError()
+            .json(ApiResponse::<()>::errors("Erreur lors du hachage du mot de passe", None)),
+    };
 
     // 3. Création de l'ActiveModel
     // On utilise user_json (et non user_data)
@@ -40,7 +46,7 @@ pub async fn create_user(
     // 4. Insertion réelle en base
     match new_user.insert(db.get_ref()).await {
         Ok(user_model) => HttpResponse::Created().json(ApiResponse::success(user_model)),
-        Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
+        Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<()>::errors(&e.to_string(), None))
     }
 }
 
