@@ -13,6 +13,19 @@ pub struct CreateUser {
     pub password: String, 
 }
 
+#[derive(serde::Deserialize, Validate)]
+pub struct LoginRequest {
+    #[validate(email)]
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(serde::Serialize)]
+pub struct AuthResponse {
+    pub token: String,
+    pub user: User, // Ton modèle User sans le password_hash si possible
+}
+
 // --- CONFIGURATION SEA-ORM ---
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize)]

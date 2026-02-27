@@ -9,6 +9,8 @@ use sea_orm::{DatabaseConnection};
 use sea_orm::{ActiveModelTrait, Set};
 
 use crate::utils::password::hash_password;
+use crate::utils::password::verify_password; // Tu devras créer cette fonction
+use sea_orm::{EntityTrait, QueryFilter, ColumnTrait};
 
 // ... tes autres imports
 
@@ -64,6 +66,42 @@ pub async fn get_user(user_id: web::Path<Uuid>) -> HttpResponse {
 
     // On renvoie une réponse structurée via ton modèle ApiResponse
     HttpResponse::Ok().json(ApiResponse::success(mock_user))
+}
+
+pub async fn login(
+    db: web::Data<DatabaseConnection>,
+    login_json: web::Json<LoginRequest>
+) -> HttpResponse {
+    // 1. Validation des champs
+    if let Err(errors) = login_json.validate() {
+        return HttpResponse::BadRequest().json(ApiResponse::<()>::validation_error(errors));
+    }
+
+    // 2. Recherche de l'utilisateur par Email
+    let user_result = User::find()
+        .filter(crate::models::user::Column::Email.eq(login_json.email.clone()))
+        .one(db.get_ref())
+        .await;
+
+    match user_result {
+        Ok(Some(user)) => {
+            // 3. Vérification du mot de passe
+            match verify_password(&login_json.password, &user.password_hash) {
+                Ok(true) => {
+                    // TODO: Générer le JWT ici
+                    let fake_token = "prochaine_etape_jwt".to_string();
+                    
+                    HttpResponse::Ok().json(ApiResponse::success(AuthResponse {
+                        token: fake_token,
+                        user,
+                    }))
+                },
+                _ => HttpResponse::Unauthorized().json(ApiResponse::<()>::errors("Identifiants invalides", None)),
+            }
+        },
+        Ok(None) => HttpResponse::Unauthorized().json(ApiResponse::<()>::errors("Identifiants invalides", None)),
+        Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<()>::errors(&e.to_string(), None)),
+    }
 }
 
 pub async fn health_check() -> HttpResponse {
