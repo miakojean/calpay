@@ -1,18 +1,8 @@
 use argon2::{
-    password_hash::{
-        rand_core::OsRng, PasswordHasher, SaltString
-    },
-    Argon2
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2,
 };
 
-/// Hache un mot de passe en clair avec Argon2id (paramètres par défaut)
-///
-/// # Arguments
-/// * `password` - Le mot de passe en clair (une chaîne de caractères)
-///
-/// # Retourne
-/// * `Ok(String)` contenant le hash au format PHC string (prêt à être stocké)
-/// * `Err(argon2::password_hash::Error)` en cas d'échec (peu probable avec les paramètres par défaut)
 pub fn hash_password(password: &str) -> Result<String, argon2::password_hash::Error> {
     // Génère un sel cryptographiquement sûr
     let salt = SaltString::generate(&mut OsRng);
@@ -25,4 +15,11 @@ pub fn hash_password(password: &str) -> Result<String, argon2::password_hash::Er
     
     // Retourne le hash sous forme de chaîne (PHC format)
     Ok(password_hash.to_string())
+}
+
+pub fn verify_password(password: &str, hash: &str) -> Result<bool, argon2::password_hash::Error> {
+    let parsed_hash = PasswordHash::new(hash)?;
+    Ok(Argon2::default()
+        .verify_password(password.as_bytes(), &parsed_hash)
+        .is_ok())
 }

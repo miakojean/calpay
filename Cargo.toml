@@ -16,3 +16,6 @@ validator = { version = "0.16", features = ["derive"] }
 sea-orm = { version = "2.0.0-rc", features = ["sqlx-sqlite", "runtime-tokio", "with-uuid", "with-json"] }
 argon2 = "0.5.3"
 rand_core = { version = "0.6", features = ["getrandom"] }
+jsonwebtoken = "9.3"
+chrono = "0.4.44"
+futures-util = "0.3.32"

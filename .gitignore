@@ -61,3 +61,5 @@ $RECYCLE.BIN/
 .env
 *.env
 secrets.yaml
+
+*.http

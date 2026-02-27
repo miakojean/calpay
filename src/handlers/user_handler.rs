@@ -12,6 +12,9 @@ use crate::utils::password::hash_password;
 use crate::utils::password::verify_password; // Tu devras créer cette fonction
 use sea_orm::{EntityTrait, QueryFilter, ColumnTrait};
 
+use crate::models::user::LoginRequest;
+use crate::utils::jwt::create_jwt;
+
 // ... tes autres imports
 
 pub async fn create_user(
@@ -61,7 +64,8 @@ pub async fn get_user(user_id: web::Path<Uuid>) -> HttpResponse {
         firstname: String::from("Jean"),
         lastname: String::from("Dupont"),
         // Même pour un mock, ce champ est requis par le compilateur
-        password_hash: String::from("hashed_password_placeholder"), 
+        password_hash: String::from("hashed_password_placeholder"),
+        is_active: bool::from(true)
     };
 
     // On renvoie une réponse structurée via ton modèle ApiResponse
@@ -72,12 +76,12 @@ pub async fn login(
     db: web::Data<DatabaseConnection>,
     login_json: web::Json<LoginRequest>
 ) -> HttpResponse {
-    // 1. Validation des champs
+    // 1. Validation des champs via validator
     if let Err(errors) = login_json.validate() {
         return HttpResponse::BadRequest().json(ApiResponse::<()>::validation_error(errors));
     }
 
-    // 2. Recherche de l'utilisateur par Email
+    // 2. Recherche de l'utilisateur par Email via Sea-ORM
     let user_result = User::find()
         .filter(crate::models::user::Column::Email.eq(login_json.email.clone()))
         .one(db.get_ref())
@@ -85,22 +89,35 @@ pub async fn login(
 
     match user_result {
         Ok(Some(user)) => {
-            // 3. Vérification du mot de passe
+            // 3. Vérification du mot de passe haché (Argon2id)
             match verify_password(&login_json.password, &user.password_hash) {
                 Ok(true) => {
-                    // TODO: Générer le JWT ici
-                    let fake_token = "prochaine_etape_jwt".to_string();
-                    
-                    HttpResponse::Ok().json(ApiResponse::success(AuthResponse {
-                        token: fake_token,
-                        user,
-                    }))
+                    // 4. GÉNÉRATION DU JWT RÉEL
+                    // On utilise l'ID de l'utilisateur pour le sujet du token
+                    match create_jwt(user.id) {
+                        Ok(token) => {
+                            // On construit la réponse avec AuthResponse
+                            // Rappel : password_hash est automatiquement masqué par Serde
+                            let response_data = ApiResponse::success(token);
+                            
+                            HttpResponse::Ok().json(ApiResponse::success(response_data))
+                        },
+                        Err(_) => HttpResponse::InternalServerError().json(
+                            ApiResponse::<()>::errors("Échec de génération du jeton", None)
+                        ),
+                    }
                 },
-                _ => HttpResponse::Unauthorized().json(ApiResponse::<()>::errors("Identifiants invalides", None)),
+                _ => HttpResponse::Unauthorized().json(
+                    ApiResponse::<()>::errors("Identifiants invalides", None)
+                ),
             }
         },
-        Ok(None) => HttpResponse::Unauthorized().json(ApiResponse::<()>::errors("Identifiants invalides", None)),
-        Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<()>::errors(&e.to_string(), None)),
+        Ok(None) => HttpResponse::Unauthorized().json(
+            ApiResponse::<()>::errors("Identifiants invalides", None)
+        ),
+        Err(e) => HttpResponse::InternalServerError().json(
+            ApiResponse::<()>::errors(&e.to_string(), None)
+        ),
     }
 }
 

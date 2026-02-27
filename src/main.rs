@@ -2,6 +2,7 @@ mod handlers;
 mod models;
 mod routes;
 mod utils;
+mod middleware;
 
 use actix_web::{web, App, HttpServer}; // Ajout de 'web' ici
 use dotenv::dotenv;
