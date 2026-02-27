@@ -15,6 +15,9 @@ use routes::user_routes::init;
 async fn main() -> std::io::Result<()> {
     // 1. Charger les variables d'environnement (.env)
     dotenv().ok();
+
+    let _ = env::var("JWT_SECRET")
+    .expect("JWT_SECRET non définie dans le fichier .env");
     
     // 2. Récupérer l'URL de la base de données
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL non définie dans le fichier .env");

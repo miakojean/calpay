@@ -3,8 +3,18 @@ Content-Type: application/json
 
 {
     "username": "Johndoe",
-    "email": "jean",
+    "email": "jdoe@gmail.com",
     "firstname":"John",
     "lastname": "Doe",
+    "password": "Jeanyves123456@",
+    "is_active": true
+}
+
+### loggin a user
+post http://127.0.0.1:8080/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "johndoe@gmail.com",
     "password": "Jeanyves123456@"
 }

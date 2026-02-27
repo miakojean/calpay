@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
 use sea_orm::entity::prelude::*; // Import vital pour les macros

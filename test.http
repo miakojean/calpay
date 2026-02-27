@@ -6,7 +6,8 @@ Content-Type: application/json
     "firstname": "John",
     "username": "johndoe",
     "email": "johndoe@gmail.com",
-    "password": "Jeanyves123456@"
+    "password": "Jeanyves123456@",
+    "is_active": true
 }
 
 ###
@@ -15,10 +16,11 @@ Content-Type: application/json
 
 {   
     "lastname": "Doe",
-    "firstname": "John",
-    "username": "johndoe",
-    "email": "johndoe@gmail.com",
-    "password": "Jeanyves123456@"
+    "firstname": "Jena",
+    "username": "jenadoe",
+    "email": "jenadoe@gmail.com",
+    "password": "Jeanyves123456@",
+    "is_active": true
 }
 
 ###

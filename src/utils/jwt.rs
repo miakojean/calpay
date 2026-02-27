@@ -11,7 +11,8 @@ pub struct Claims {
 }
 
 pub fn create_jwt(user_id: Uuid) -> Result<String, jsonwebtoken::errors::Error> {
-    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "secret_temporaire".to_string());
+    let secret = std::env::var("JWT_SECRET")
+    .expect("JWT_SECRET doit être définie");
     
     let expiration = Utc::now()
         .checked_add_signed(Duration::hours(24))
