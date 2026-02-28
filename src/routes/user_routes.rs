@@ -1,6 +1,6 @@
 use actix_web::web;
 
-use crate::handlers::user_handler::{create_user, get_user, health_check, health_db_check, login};
+use crate::handlers::user_handler::{create_user, get_user, health_check, health_db_check, login, logout};
 
 pub fn init(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -8,6 +8,7 @@ pub fn init(cfg: &mut web::ServiceConfig) {
             .route("/users", web::post().to(create_user))
             .route("/users/{id}", web::get().to(get_user))
             .route("/auth/login", web::post().to(login)) 
+            .route("/auth/logout", web::post().to(logout))
             .route("/health", web::get().to(health_check))
             .route("/health/db", web::get().to(health_db_check))
     );

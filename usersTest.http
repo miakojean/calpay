@@ -18,3 +18,8 @@ Content-Type: application/json
     "email": "johndoe@gmail.com",
     "password": "Jeanyves123456@"
 }
+
+### logout
+post http://127.0.0.1:8080/api/auth/logout
+Content-Type: application/json
+Authorization: Bearer

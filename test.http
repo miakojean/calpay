@@ -7,7 +7,8 @@ Content-Type: application/json
     "username": "johndoe",
     "email": "johndoe@gmail.com",
     "password": "Jeanyves123456@",
-    "is_active": true
+    "is_active": true,
+    "role": "user"
 }
 
 ###
@@ -20,7 +21,8 @@ Content-Type: application/json
     "username": "jenadoe",
     "email": "jenadoe@gmail.com",
     "password": "Jeanyves123456@",
-    "is_active": true
+    "is_active": true,
+    "role": "user"
 }
 
 ###
@@ -32,7 +34,9 @@ Content-Type: application/json
     "firstname": "John",
     "username": "johndoe",
     "email": "johndoe@gmail.com",
-    "password": "Jeanyves123456@"
+    "password": "Jeanyves123456@",
+    "role": "user",
+    "is_active": true
 }
 
 ###
@@ -44,5 +48,11 @@ Content-Type: application/json
     "firstname": "Jean Yves Arnold",
     "username": "johnyves",
     "email": "miakojeanyves@gmail.com",
-    "password": "Jeanyves123456@"
+    "password": "Jeanyves123456@",
+    "role": "user",
+    "is_active": true
 }
+
+###
+GET http://127.0.0.1:8080/api/users/b4a5f731ae314dfcaaed1a3d1f511d8c
+Content-Type: application/json

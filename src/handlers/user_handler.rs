@@ -1,5 +1,4 @@
 use actix_web::{HttpResponse, web, Responder};
-use serde::de::value::BoolDeserializer;
 use uuid::Uuid;
 use validator::Validate;
 use crate::models::api_response::ApiResponse;
@@ -14,6 +13,16 @@ use sea_orm::{EntityTrait, QueryFilter, ColumnTrait};
 
 use crate::models::user::LoginRequest;
 use crate::utils::jwt::create_jwt;
+
+// Imports pour le logout
+use chrono::Utc;
+use crate::models::revoked_token::{
+    ActiveModel as RevokedTokenActiveModel,
+    Entity as RevokedTokenEntity,
+    Column as RevokedTokenColumn,
+};
+use crate::middleware::auth::AuthenticatedUser;
+use crate::utils::jwt::now_timestamp;
 
 pub async fn create_user(
     db: web::Data<DatabaseConnection>,
@@ -43,7 +52,7 @@ pub async fn create_user(
     };
 
     match new_user.insert(db.get_ref()).await {
-        Ok(user_model) => HttpResponse::Created().json(ApiResponse::success(user_model)),
+        Ok(user_model) => HttpResponse::Created().json(ApiResponse::success(user_model, "Nouvel utilisateur enrégistré avec succès")),
         Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<()>::errors(&e.to_string(), None))
     }
 }
@@ -56,22 +65,21 @@ pub async fn get_user(user_id: web::Path<Uuid>) -> HttpResponse {
         firstname: String::from("Jean"),
         lastname: String::from("Dupont"),
         password_hash: String::from("hashed_password_placeholder"),
-        is_active: bool::from(true)
+        is_active: bool::from(true),
+        role: String::from("user")
     };
 
-    HttpResponse::Ok().json(ApiResponse::success(mock_user))
+    HttpResponse::Ok().json(ApiResponse::success(mock_user, "Utilisateur récupéré avec succès"))
 }
 
 pub async fn login(
     db: web::Data<DatabaseConnection>,
     login_json: web::Json<LoginRequest>
 ) -> HttpResponse {
-    // 1. Validation des champs
     if let Err(errors) = login_json.validate() {
         return HttpResponse::BadRequest().json(ApiResponse::<()>::validation_error(errors));
     }
 
-    // 2. Recherche de l'utilisateur par email
     let user_result = UserEntity::find()
         .filter(crate::models::user::Column::Email.eq(login_json.email.clone()))
         .one(db.get_ref())
@@ -79,17 +87,12 @@ pub async fn login(
 
     match user_result {
         Ok(Some(user)) => {
-            // 3. Vérification du mot de passe
             match verify_password(&login_json.password, &user.password_hash) {
                 Ok(true) => {
-                    // 4. Génération du JWT
-                    match create_jwt(user.id) {
+                    match create_jwt(user.id, &user.email, &user.role) {
                         Ok(token) => {
-                            // 5. Réponse finale : token + user (password_hash masqué par Serde)
                             let response = AuthResponse { token, user };
-                            HttpResponse::Ok().json(ApiResponse::success(response))
-                            //                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                            // Un seul niveau de wrapping — corrige le double ApiResponse
+                            HttpResponse::Ok().json(ApiResponse::success(response, "Connexion réussie"))
                         },
                         Err(_) => HttpResponse::InternalServerError().json(
                             ApiResponse::<()>::errors("Échec de génération du jeton", None)
@@ -110,8 +113,37 @@ pub async fn login(
     }
 }
 
+pub async fn logout(
+    db: web::Data<DatabaseConnection>,
+    user: AuthenticatedUser, // ← Vérifie le token ET fournit le jti automatiquement
+) -> HttpResponse {
+    // 1. Insertion du jti en blacklist
+    let revoked = RevokedTokenActiveModel {
+        jti: Set(user.jti.clone()),
+        user_id: Set(user.id),
+        exp: Set(user.exp),
+        revoked_at: Set(Utc::now().into()),
+    };
+
+    match revoked.insert(db.get_ref()).await {
+        Ok(_) => {
+            // 2. Purge opportuniste des tokens expirés
+            let now = now_timestamp();
+            let _ = RevokedTokenEntity::delete_many()
+                .filter(RevokedTokenColumn::Exp.lt(now))
+                .exec(db.get_ref())
+                .await;
+
+            HttpResponse::Ok().json(ApiResponse::<()>::errors("Déconnexion réussie", None))
+        },
+        Err(e) => HttpResponse::InternalServerError().json(
+            ApiResponse::<()>::errors(&e.to_string(), None)
+        ),
+    }
+}
+
 pub async fn health_check() -> HttpResponse {
-    HttpResponse::Ok().json(ApiResponse::success("API is up and running!"))
+    HttpResponse::Ok().json(ApiResponse::success("API is up and running!", "Serveur en marche"))
 }
 
 pub async fn health_db_check(db: web::Data<DatabaseConnection>) -> impl Responder {

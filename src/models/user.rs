@@ -1,4 +1,4 @@
- use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
 use sea_orm::entity::prelude::*; // Import vital pour les macros
@@ -11,10 +11,11 @@ pub struct CreateUser {
     pub lastname: String,
     #[validate(length(min = 8, message = "Le mot de passe doit faire au moins 8 caractères"))]
     pub password: String,
-    pub is_active: bool 
+    pub is_active: bool,
+    pub role: String, 
 }
 
-// --- CONFIGURATION SEA-ORM ---
+// --- CONFIGURATION SEA-ORM --- 
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize)]
 #[sea_orm(table_name = "users")] // Nom de la table dans SQLite
@@ -29,7 +30,8 @@ pub struct Model {
     pub lastname: String,
     #[serde(skip_serializing)] 
     pub password_hash: String,
-    pub is_active: bool
+    pub is_active: bool,
+    pub role: String
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
